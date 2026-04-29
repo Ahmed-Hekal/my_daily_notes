@@ -146,6 +146,18 @@ body {
   padding: 15px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-left: 4px solid #667eea;
+  cursor: move;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.task-card.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.task-card.drag-over {
+  border-top: 3px solid #667eea;
+  transform: translateY(5px);
 }
 
 .task-card.priority-high {

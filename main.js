@@ -44,6 +44,11 @@ ipcMain.handle('db:deleteTask', (event, id) => {
   return true;
 });
 
+ipcMain.handle('db:updateTaskPositions', (event, taskPositions) => {
+  db.updateTaskPositions(taskPositions);
+  return true;
+});
+
 // This method will be called when Electron has finished initialization
 app.whenReady().then(async () => {
   // Initialize database

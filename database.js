@@ -34,12 +34,26 @@ async function initDatabase() {
       priority TEXT NOT NULL,
       status TEXT NOT NULL,
       description TEXT NOT NULL,
+      position INTEGER DEFAULT 0,
       created_at INTEGER DEFAULT (strftime('%s', 'now')),
       FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
     );
 
     CREATE INDEX IF NOT EXISTS idx_tasks_board_id ON tasks(board_id);
   `);
+  
+  // Add position column if it doesn't exist (for existing databases)
+  try {
+    const checkColumn = db.exec("PRAGMA table_info(tasks)");
+    if (checkColumn.length > 0) {
+      const columns = checkColumn[0].values.map(row => row[1]);
+      if (!columns.includes('position')) {
+        db.run('ALTER TABLE tasks ADD COLUMN position INTEGER DEFAULT 0');
+      }
+    }
+  } catch (error) {
+    console.log('Position column check/add error (might already exist):', error.message);
+  }
   
   saveDatabase();
 }
@@ -87,7 +101,7 @@ function deleteBoard(id) {
 
 // Task operations
 function getTasksByBoardId(boardId) {
-  const result = db.exec('SELECT * FROM tasks WHERE board_id = ? ORDER BY created_at DESC', [boardId]);
+  const result = db.exec('SELECT * FROM tasks WHERE board_id = ? ORDER BY position ASC, created_at DESC', [boardId]);
   
   if (result.length === 0) return [];
   
@@ -96,21 +110,36 @@ function getTasksByBoardId(boardId) {
     title: row[2],
     priority: row[3],
     status: row[4],
-    description: row[5]
+    description: row[5],
+    position: row[6] || 0
   }));
 }
 
 function createTask(id, boardId, title, priority, status, description) {
+  // Get the highest position for this board
+  const posResult = db.exec('SELECT MAX(position) FROM tasks WHERE board_id = ?', [boardId]);
+  const maxPosition = (posResult.length > 0 && posResult[0].values.length > 0 && posResult[0].values[0][0]) 
+    ? posResult[0].values[0][0] : 0;
+  const newPosition = maxPosition + 1;
+  
   db.run(
-    'INSERT INTO tasks (id, board_id, title, priority, status, description) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, boardId, title, priority, status, description]
+    'INSERT INTO tasks (id, board_id, title, priority, status, description, position) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [id, boardId, title, priority, status, description, newPosition]
   );
   saveDatabase();
-  return { id, title, priority, status, description };
+  return { id, title, priority, status, description, position: newPosition };
 }
 
 function deleteTask(id) {
   db.run('DELETE FROM tasks WHERE id = ?', [id]);
+  saveDatabase();
+}
+
+function updateTaskPositions(taskPositions) {
+  // taskPositions is an array of {id, position}
+  taskPositions.forEach(({ id, position }) => {
+    db.run('UPDATE tasks SET position = ? WHERE id = ?', [position, id]);
+  });
   saveDatabase();
 }
 
@@ -120,5 +149,6 @@ module.exports = {
   createBoard,
   deleteBoard,
   createTask,
-  deleteTask
+  deleteTask,
+  updateTaskPositions
 };
