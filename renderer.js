@@ -5,22 +5,19 @@
 let boards = [];
 let currentBoardId = null;
 
-// Load data from localStorage on startup
-function loadData() {
-  const savedBoards = localStorage.getItem('taskBoards');
-  if (savedBoards) {
-    boards = JSON.parse(savedBoards);
+// Load data from SQLite database
+async function loadData() {
+  try {
+    boards = await window.db.getAllBoards();
+  } catch (error) {
+    console.error('Error loading data:', error);
+    boards = [];
   }
 }
 
-// Save data to localStorage
-function saveData() {
-  localStorage.setItem('taskBoards', JSON.stringify(boards));
-}
-
 // Initialize app
-function init() {
-  loadData();
+async function init() {
+  await loadData();
   renderBoards();
   attachEventListeners();
 }
@@ -165,27 +162,28 @@ function closeCreateTaskModal() {
 }
 
 // Create new board
-function createBoard(event) {
+async function createBoard(event) {
   event.preventDefault();
   
   const title = document.getElementById('boardTitle').value.trim();
   
   if (title) {
-    const newBoard = {
-      id: generateId(),
-      title: title,
-      tasks: []
-    };
+    const id = generateId();
     
-    boards.push(newBoard);
-    saveData();
-    renderBoards();
-    closeCreateBoardModal();
+    try {
+      const newBoard = await window.db.createBoard(id, title);
+      boards.push(newBoard);
+      renderBoards();
+      closeCreateBoardModal();
+    } catch (error) {
+      console.error('Error creating board:', error);
+      alert('Failed to create board');
+    }
   }
 }
 
 // Create new task
-function createTask(event) {
+async function createTask(event) {
   event.preventDefault();
   
   const board = boards.find(b => b.id === currentBoardId);
@@ -197,39 +195,48 @@ function createTask(event) {
   const description = document.getElementById('taskDescription').value.trim();
   
   if (title && description) {
-    const newTask = {
-      id: generateId(),
-      title: title,
-      priority: priority,
-      status: status,
-      description: description
-    };
+    const id = generateId();
     
-    board.tasks.push(newTask);
-    saveData();
-    renderTasks();
-    closeCreateTaskModal();
+    try {
+      const newTask = await window.db.createTask(id, currentBoardId, title, priority, status, description);
+      board.tasks.push(newTask);
+      renderTasks();
+      closeCreateTaskModal();
+    } catch (error) {
+      console.error('Error creating task:', error);
+      alert('Failed to create task');
+    }
   }
 }
 
 // Delete task
-function deleteTask(taskId) {
+async function deleteTask(taskId) {
   const board = boards.find(b => b.id === currentBoardId);
   if (!board) return;
   
   if (confirm('Are you sure you want to delete this task?')) {
-    board.tasks = board.tasks.filter(t => t.id !== taskId);
-    saveData();
-    renderTasks();
+    try {
+      await window.db.deleteTask(taskId);
+      board.tasks = board.tasks.filter(t => t.id !== taskId);
+      renderTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task');
+    }
   }
 }
 
 // Delete current board
-function deleteCurrentBoard() {
+async function deleteCurrentBoard() {
   if (confirm('Are you sure you want to delete this board and all its tasks?')) {
-    boards = boards.filter(b => b.id !== currentBoardId);
-    saveData();
-    showBoardsList();
+    try {
+      await window.db.deleteBoard(currentBoardId);
+      boards = boards.filter(b => b.id !== currentBoardId);
+      showBoardsList();
+    } catch (error) {
+      console.error('Error deleting board:', error);
+      alert('Failed to delete board');
+    }
   }
 }
 
