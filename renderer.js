@@ -22,6 +22,51 @@ function saveData() {
 function init() {
   loadData();
   renderBoards();
+  attachEventListeners();
+}
+
+// Attach all event listeners
+function attachEventListeners() {
+  // New Board button
+  document.getElementById('newBoardBtn').addEventListener('click', showCreateBoardModal);
+  
+  // Back to boards button
+  document.getElementById('backToBoardsBtn').addEventListener('click', showBoardsList);
+  
+  // New Task button
+  document.getElementById('newTaskBtn').addEventListener('click', showCreateTaskModal);
+  
+  // Delete Board button
+  document.getElementById('deleteBoardBtn').addEventListener('click', deleteCurrentBoard);
+  
+  // Modal close buttons
+  document.getElementById('closeBoardModalBtn').addEventListener('click', closeCreateBoardModal);
+  document.getElementById('closeTaskModalBtn').addEventListener('click', closeCreateTaskModal);
+  
+  // Form submissions
+  document.getElementById('createBoardForm').addEventListener('submit', createBoard);
+  document.getElementById('createTaskForm').addEventListener('submit', createTask);
+  
+  // Event delegation for dynamically created elements
+  document.getElementById('boardsGrid').addEventListener('click', handleBoardClick);
+  document.getElementById('tasksGrid').addEventListener('click', handleTaskClick);
+}
+
+// Handle board card clicks
+function handleBoardClick(event) {
+  const boardCard = event.target.closest('.board-card');
+  if (boardCard) {
+    const boardId = boardCard.dataset.boardId;
+    openBoard(boardId);
+  }
+}
+
+// Handle task action clicks
+function handleTaskClick(event) {
+  if (event.target.classList.contains('delete-task-btn')) {
+    const taskId = event.target.dataset.taskId;
+    deleteTask(taskId);
+  }
 }
 
 // Render boards list
@@ -38,7 +83,7 @@ function renderBoards() {
   }
 
   boardsGrid.innerHTML = boards.map(board => `
-    <div class="board-card" onclick="openBoard('${board.id}')">
+    <div class="board-card" data-board-id="${board.id}">
       <h3>${escapeHtml(board.title)}</h3>
       <p class="task-count">${board.tasks.length} task${board.tasks.length !== 1 ? 's' : ''}</p>
     </div>
@@ -71,7 +116,7 @@ function renderTasks() {
         </span>
       </div>
       <p class="task-description">${escapeHtml(task.description)}</p>
-      <button class="btn btn-danger btn-small" onclick="deleteTask('${task.id}')">Delete</button>
+      <button class="btn btn-danger btn-small delete-task-btn" data-task-id="${task.id}">Delete</button>
     </div>
   `).join('');
 }

@@ -17,7 +17,7 @@
     <div id="boardsList" class="boards-section">
       <div class="section-header">
         <h2>Your Boards</h2>
-        <button class="btn" onclick="showCreateBoardModal()">+ New Board</button>
+        <button class="btn" id="newBoardBtn">+ New Board</button>
       </div>
       <div id="boardsGrid" class="boards-grid"></div>
     </div>
@@ -26,12 +26,12 @@
     <div id="boardView" class="board-view">
       <div class="board-header">
         <div>
-          <button class="btn btn-small" onclick="showBoardsList()">← Back to Boards</button>
+          <button class="btn btn-small" id="backToBoardsBtn">← Back to Boards</button>
           <h2 class="board-title" id="currentBoardTitle"></h2>
         </div>
         <div class="btn-group">
-          <button class="btn btn-secondary" onclick="showCreateTaskModal()">+ New Task</button>
-          <button class="btn btn-danger btn-small" onclick="deleteCurrentBoard()">Delete Board</button>
+          <button class="btn btn-secondary" id="newTaskBtn">+ New Task</button>
+          <button class="btn btn-danger btn-small" id="deleteBoardBtn">Delete Board</button>
         </div>
       </div>
       <div id="tasksGrid" class="tasks-grid"></div>
@@ -43,9 +43,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>Create New Board</h3>
-        <button class="close-btn" onclick="closeCreateBoardModal()">&times;</button>
+        <button class="close-btn" id="closeBoardModalBtn">&times;</button>
       </div>
-      <form onsubmit="createBoard(event)">
+      <form id="createBoardForm">
         <div class="form-group">
           <label for="boardTitle">Board Title</label>
           <input type="text" id="boardTitle" required>
@@ -60,9 +60,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>Create New Task</h3>
-        <button class="close-btn" onclick="closeCreateTaskModal()">&times;</button>
+        <button class="close-btn" id="closeTaskModalBtn">&times;</button>
       </div>
-      <form onsubmit="createTask(event)">
+      <form id="createTaskForm">
         <div class="form-group">
           <label for="taskTitle">Title</label>
           <input type="text" id="taskTitle" required>
