@@ -9,7 +9,23 @@ let db = null;
 
 // Initialize database
 async function initDatabase() {
-  const SQL = await initSqlJs();
+  // Handle both development and production environments
+  let wasmPath;
+  
+  // Check if we're in packaged app (production) or development
+  if (app.isPackaged) {
+    // In production, use process.resourcesPath
+    wasmPath = path.join(process.resourcesPath, 'app.asar.unpacked/node_modules/sql.js/dist/sql-wasm.wasm');
+  } else {
+    // In development
+    wasmPath = path.join(__dirname, 'node_modules/sql.js/dist/sql-wasm.wasm');
+  }
+  
+  const wasmBinary = fs.readFileSync(wasmPath);
+  
+  const SQL = await initSqlJs({
+    wasmBinary
+  });
   
   // Load existing database or create new one
   if (fs.existsSync(dbPath)) {

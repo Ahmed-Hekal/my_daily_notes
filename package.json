@@ -34,8 +34,10 @@
     },
     "files": [
       "**/*",
-      "!**/*.md",
-      "!node_modules/**/*"
+      "!**/*.md"
+    ],
+    "asarUnpack": [
+      "node_modules/sql.js/**/*"
     ]
   },
   "dependencies": {
