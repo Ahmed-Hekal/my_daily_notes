@@ -11,7 +11,8 @@ contextBridge.exposeInMainWorld('db', {
   createTask: (id, boardId, title, priority, status, description) => 
     ipcRenderer.invoke('db:createTask', id, boardId, title, priority, status, description),
   deleteTask: (id) => ipcRenderer.invoke('db:deleteTask', id),
-  updateTaskPositions: (taskPositions) => ipcRenderer.invoke('db:updateTaskPositions', taskPositions)
+  updateTaskPositions: (taskPositions) => ipcRenderer.invoke('db:updateTaskPositions', taskPositions),
+  updateTaskDescription: (taskId, description) => ipcRenderer.invoke('db:updateTaskDescription', taskId, description)
 });
 
 window.addEventListener('DOMContentLoaded', () => {

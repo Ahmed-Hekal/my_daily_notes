@@ -63,6 +63,15 @@ function handleTaskClick(event) {
   if (event.target.classList.contains('delete-task-btn')) {
     const taskId = event.target.dataset.taskId;
     deleteTask(taskId);
+  } else if (event.target.classList.contains('edit-task-btn')) {
+    const taskId = event.target.dataset.taskId;
+    enableEditMode(taskId);
+  } else if (event.target.classList.contains('save-task-btn')) {
+    const taskId = event.target.dataset.taskId;
+    saveTaskDescription(taskId);
+  } else if (event.target.classList.contains('cancel-edit-btn')) {
+    const taskId = event.target.dataset.taskId;
+    cancelEditMode(taskId);
   }
 }
 
@@ -199,19 +208,30 @@ function renderTasks() {
     return;
   }
 
-  tasksGrid.innerHTML = board.tasks.map(task => `
-    <div class="task-card priority-${task.priority}" draggable="true" data-task-id="${task.id}">
-      <h4>${escapeHtml(task.title)}</h4>
-      <div class="task-meta">
-        <span class="task-badge priority-badge">Priority: ${task.priority}</span>
-        <span class="task-badge status-badge status-${task.status}">
-          ${formatStatus(task.status)}
-        </span>
+  tasksGrid.innerHTML = board.tasks.map(task => {
+    const canEdit = task.status === 'todo' || task.status === 'in-progress';
+    return `
+      <div class="task-card priority-${task.priority}" draggable="true" data-task-id="${task.id}">
+        <h4>${escapeHtml(task.title)}</h4>
+        <div class="task-meta">
+          <span class="task-badge priority-badge">Priority: ${task.priority}</span>
+          <span class="task-badge status-badge status-${task.status}">
+            ${formatStatus(task.status)}
+          </span>
+        </div>
+        <div class="task-description-container">
+          <p class="task-description" data-task-id="${task.id}">${escapeHtml(task.description)}</p>
+          <textarea class="task-description-edit" data-task-id="${task.id}" style="display: none;">${escapeHtml(task.description)}</textarea>
+        </div>
+        <div class="task-actions">
+          ${canEdit ? `<button class="btn btn-secondary btn-small edit-task-btn" data-task-id="${task.id}">Edit</button>` : ''}
+          <button class="btn btn-success btn-small save-task-btn" data-task-id="${task.id}" style="display: none;">Save</button>
+          <button class="btn btn-secondary btn-small cancel-edit-btn" data-task-id="${task.id}" style="display: none;">Cancel</button>
+          <button class="btn btn-danger btn-small delete-task-btn" data-task-id="${task.id}">Delete</button>
+        </div>
       </div>
-      <p class="task-description">${escapeHtml(task.description)}</p>
-      <button class="btn btn-danger btn-small delete-task-btn" data-task-id="${task.id}">Delete</button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
   
   // Attach drag and drop listeners
   attachDragDropListeners();
@@ -337,6 +357,104 @@ async function deleteCurrentBoard() {
       alert('Failed to delete board');
     }
   }
+}
+
+// Enable edit mode for task description
+function enableEditMode(taskId) {
+  const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+  if (!card) return;
+  
+  // Disable dragging while editing
+  card.setAttribute('draggable', 'false');
+  card.classList.add('editing');
+  
+  // Hide description paragraph and show textarea
+  const descriptionP = card.querySelector('.task-description');
+  const descriptionTextarea = card.querySelector('.task-description-edit');
+  descriptionP.style.display = 'none';
+  descriptionTextarea.style.display = 'block';
+  descriptionTextarea.focus();
+  
+  // Toggle buttons
+  const editBtn = card.querySelector('.edit-task-btn');
+  const saveBtn = card.querySelector('.save-task-btn');
+  const cancelBtn = card.querySelector('.cancel-edit-btn');
+  const deleteBtn = card.querySelector('.delete-task-btn');
+  
+  editBtn.style.display = 'none';
+  saveBtn.style.display = 'inline-block';
+  cancelBtn.style.display = 'inline-block';
+  deleteBtn.style.display = 'none';
+}
+
+// Save task description
+async function saveTaskDescription(taskId) {
+  const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+  if (!card) return;
+  
+  const descriptionTextarea = card.querySelector('.task-description-edit');
+  const newDescription = descriptionTextarea.value.trim();
+  
+  if (!newDescription) {
+    alert('Description cannot be empty');
+    return;
+  }
+  
+  try {
+    await window.db.updateTaskDescription(taskId, newDescription);
+    
+    // Update local data
+    const board = boards.find(b => b.id === currentBoardId);
+    if (board) {
+      const task = board.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.description = newDescription;
+      }
+    }
+    
+    // Re-render tasks
+    renderTasks();
+  } catch (error) {
+    console.error('Error updating task description:', error);
+    alert('Failed to update task description');
+  }
+}
+
+// Cancel edit mode
+function cancelEditMode(taskId) {
+  const card = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+  if (!card) return;
+  
+  // Get original description
+  const board = boards.find(b => b.id === currentBoardId);
+  if (board) {
+    const task = board.tasks.find(t => t.id === taskId);
+    if (task) {
+      const descriptionTextarea = card.querySelector('.task-description-edit');
+      descriptionTextarea.value = task.description;
+    }
+  }
+  
+  // Enable dragging
+  card.setAttribute('draggable', 'true');
+  card.classList.remove('editing');
+  
+  // Hide textarea and show description paragraph
+  const descriptionP = card.querySelector('.task-description');
+  const descriptionTextarea = card.querySelector('.task-description-edit');
+  descriptionP.style.display = 'block';
+  descriptionTextarea.style.display = 'none';
+  
+  // Toggle buttons
+  const editBtn = card.querySelector('.edit-task-btn');
+  const saveBtn = card.querySelector('.save-task-btn');
+  const cancelBtn = card.querySelector('.cancel-edit-btn');
+  const deleteBtn = card.querySelector('.delete-task-btn');
+  
+  editBtn.style.display = 'inline-block';
+  saveBtn.style.display = 'none';
+  cancelBtn.style.display = 'none';
+  deleteBtn.style.display = 'inline-block';
 }
 
 // Utility functions

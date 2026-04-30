@@ -214,6 +214,43 @@ body {
   color: #666;
   font-size: 14px;
   line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.task-description-container {
+  margin-bottom: 10px;
+}
+
+.task-description-edit {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 2px solid #667eea;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-card.editing {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border-left-color: #667eea;
+}
+
+.btn-success {
+  background: #48bb78;
+}
+
+.btn-success:hover {
+  background: #38a169;
 }
 
 .modal {

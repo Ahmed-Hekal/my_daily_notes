@@ -159,6 +159,11 @@ function updateTaskPositions(taskPositions) {
   saveDatabase();
 }
 
+function updateTaskDescription(taskId, description) {
+  db.run('UPDATE tasks SET description = ? WHERE id = ?', [description, taskId]);
+  saveDatabase();
+}
+
 module.exports = {
   initDatabase,
   getAllBoards,
@@ -166,5 +171,6 @@ module.exports = {
   deleteBoard,
   createTask,
   deleteTask,
-  updateTaskPositions
+  updateTaskPositions,
+  updateTaskDescription
 };
